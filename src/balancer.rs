@@ -162,16 +162,18 @@ impl Balancer {
     }
 
     fn next_random(&mut self) -> Result<u32, NoBackendAvailable> {
-        let healthy_ids: Vec<u32> = self
-            .backends
-            .iter()
-            .filter(|b| b.healthy)
-            .map(|b| b.id)
-            .collect();
-        if healthy_ids.is_empty() {
+        // Count the healthy backends, pick an index, then walk to the Nth
+        // healthy one. No per-request allocation, even with many backends.
+        let healthy = self.backends.iter().filter(|b| b.healthy).count();
+        if healthy == 0 {
             return Err(NoBackendAvailable);
         }
-        let idx = self.rng.next_below(healthy_ids.len());
-        Ok(healthy_ids[idx])
+        let idx = self.rng.next_below(healthy);
+        self.backends
+            .iter()
+            .filter(|b| b.healthy)
+            .nth(idx)
+            .map(|b| b.id)
+            .ok_or(NoBackendAvailable)
     }
 }
