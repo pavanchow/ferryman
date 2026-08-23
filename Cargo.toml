@@ -1,0 +1,17 @@
+[package]
+name = "ferryman"
+version = "0.1.0"
+edition = "2021"
+description = "The request-distribution strategies and health tracking at the core of a load balancer."
+authors = ["Pavan Nallamothu"]
+
+[[bin]]
+name = "ferryman"
+path = "src/main.rs"
+
+[lib]
+name = "ferryman"
+path = "src/lib.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }

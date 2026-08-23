@@ -2,11 +2,370 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>ferryman</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ferryman: a load balancer in Rust</title>
+<meta name="description" content="Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, no network plumbing attached.">
+<meta name="author" content="Pavan Nallamothu">
+<link rel="canonical" href="https://pavanchow.github.io/ferryman/">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ferryman: a load balancer in Rust">
+<meta property="og:description" content="Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, no network plumbing attached.">
+<meta property="og:url" content="https://pavanchow.github.io/ferryman/">
+<meta property="og:site_name" content="Ferryman">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Ferryman",
+  "description": "Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, no network plumbing attached.",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Cross-platform",
+  "author": { "@type": "Person", "name": "Pavan Nallamothu" },
+  "url": "https://pavanchow.github.io/ferryman/",
+  "programmingLanguage": "Rust"
+}
+</script>
+
+<style>
+  :root{
+    --accent:#5b5bd6;--accent-soft:#eeeefb;
+    --ink:#15161c;--muted:#6a6d78;--faint:#9a9dab;
+    --line:#ececed;--panel:#f7f7f9;--panel2:#fbfbfd;
+    --mono:ui-monospace,SFMono-Regular,Menlo,"SF Mono",monospace;
+    --good:#1f9d55;--bad:#d64545;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:#fff;color:var(--ink);
+    font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 28px}
+  a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+
+  nav{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.82);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line)}
+  nav .row{display:flex;justify-content:space-between;align-items:center;height:56px;max-width:1040px;margin:0 auto;padding:0 28px}
+  nav .brand{display:flex;align-items:center;gap:9px;font-size:18px;font-weight:650;letter-spacing:-.01em}
+  nav .brand .gem{width:16px;height:16px;transform:rotate(45deg);border-radius:3px;background:linear-gradient(135deg,#9a9af4,#5b5bd6)}
+  nav .links{display:flex;gap:26px;align-items:center}
+  nav .links a{color:var(--ink);font-size:14.5px}
+  @media(max-width:640px){nav .links a:not(.gh){display:none}}
+
+  .hero{padding:70px 0 30px;text-align:center}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:clamp(40px,7vw,68px);line-height:1.03;letter-spacing:-.035em;font-weight:680;margin:18px 0 0}
+  .hero p.sub{max-width:640px;margin:24px auto 0;font-size:clamp(17px,2.1vw,21px);color:var(--muted)}
+
+  .stage{max-width:900px;margin:44px auto 0;padding:0 28px}
+  .card{position:relative;background:linear-gradient(180deg,#fbfbff,#f4f4fb);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 1px 0 #fff inset,0 18px 50px -30px rgba(40,40,90,.35);padding:26px 26px 22px}
+
+  .demo-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .demo-top .strategy{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+  select{font:600 13px var(--mono);padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+  .demo-actions{display:flex;gap:10px}
+  button{cursor:pointer;font:600 13px var(--mono);padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  button.primary:hover{opacity:.88;color:#fff}
+  button:disabled{opacity:.4;cursor:not-allowed}
+
+  .backends{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .backend{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .backend .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .backend .id{font-family:var(--mono);font-weight:700;font-size:14px}
+  .backend .dot{width:9px;height:9px;border-radius:50%;background:var(--good)}
+  .backend.down .dot{background:var(--bad)}
+  .backend.flash{animation:flash .5s ease}
+  @keyframes flash{0%{box-shadow:0 0 0 2px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+  .backend .row2{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:4px}
+  .backend .row2 b{color:var(--ink)}
+  .backend .toggle{width:100%;margin-top:8px;font-size:11.5px;padding:6px 8px}
+  .backend.down{opacity:.62}
+
+  .log{background:#15161c;color:#ececf4;border-radius:14px;padding:14px 16px;font-family:var(--mono);font-size:12.5px;height:150px;overflow-y:auto;display:flex;flex-direction:column-reverse}
+  .log .line{padding:2px 0;color:#c7c9d6}
+  .log .line .b{color:#9a9af4}
+  .log .line.err .b{color:#f28b8b}
+  .caption{margin-top:12px;font-family:var(--mono);font-size:11.5px;color:var(--faint);text-align:center}
+
+  section{padding:92px 0;border-top:1px solid var(--line)}
+  h2{font-size:clamp(27px,4.2vw,42px);line-height:1.12;letter-spacing:-.025em;font-weight:660;text-align:center;max-width:760px;margin:0 auto}
+  .lead{max-width:620px;margin:22px auto 0;text-align:center;color:var(--muted);font-size:18px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:48px auto 0}
+  @media(max-width:720px){.steps{grid-template-columns:1fr}}
+  .step{background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .step .n{display:inline-flex;width:28px;height:28px;border-radius:8px;background:var(--accent-soft);color:var(--accent);align-items:center;justify-content:center;font:700 13px var(--mono);margin-bottom:12px}
+  .step h3{font-size:17px;margin-bottom:6px}.step p{color:var(--muted);font-size:15px}
+  pre{background:#15161c;color:#ececf4;border-radius:14px;padding:20px 22px;font-family:var(--mono);font-size:13.5px;overflow-x:auto;max-width:640px;margin:40px auto 0}
+  pre .c{color:#8a8d9a}
+  footer{padding:64px 0;border-top:1px solid var(--line);text-align:center;color:var(--muted)}
+  footer .name{color:var(--ink);font-weight:600}
+</style>
 </head>
 <body>
-<h1>ferryman</h1>
-<p>Site coming soon.</p>
-<p><a href="https://github.com/pavanchow/ferryman">View repository</a></p>
+  <nav><div class="row">
+    <div class="brand"><span class="gem"></span>Ferryman</div>
+    <div class="links">
+      <a href="#demo">Demo</a><a href="#how">How it works</a><a href="#source">Source</a>
+      <a class="gh" href="https://github.com/pavanchow/ferryman">GitHub</a>
+    </div>
+  </div></nav>
+
+  <div id="demo" class="hero">
+    <p class="eyebrow">Rust · no network plumbing</p>
+    <h1>Which backend gets<br>the next request.</h1>
+    <p class="sub">Ferryman is a load balancer in Rust, isolated down to the part that actually decides: round-robin, weighted round-robin, least-connections, and seeded random, plus health tracking that skips a backend the instant it goes down. Try it below.</p>
+  </div>
+
+  <div class="stage">
+    <div class="card">
+      <div class="demo-top">
+        <div class="strategy">
+          Strategy
+          <select id="strategySelect">
+            <option value="round-robin">round-robin</option>
+            <option value="weighted-round-robin">weighted round-robin</option>
+            <option value="least-connections">least-connections</option>
+            <option value="random">random (seeded)</option>
+          </select>
+        </div>
+        <div class="demo-actions">
+          <button id="resetBtn" type="button">Reset</button>
+          <button id="sendOneBtn" type="button" class="primary">Send request</button>
+          <button id="sendTenBtn" type="button" class="primary">Send 10</button>
+        </div>
+      </div>
+
+      <div id="backendGrid" class="backends"></div>
+
+      <div id="log" class="log"></div>
+      <p class="caption">toggle a backend unhealthy and watch requests reroute live</p>
+    </div>
+  </div>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <p class="lead">The same four strategies, running underneath, with health and connection state kept per backend.</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Round-robin</h3><p>A cursor walks the backend list in order, wrapping around, skipping anything unhealthy along the way.</p></div>
+      <div class="step"><div class="n">2</div><h3>Weighted round-robin</h3><p>Smooth weighted selection accumulates a current weight per backend each pick and always takes the highest.</p></div>
+      <div class="step"><div class="n">3</div><h3>Least-connections</h3><p>Picks the healthy backend with the fewest active connections right now, ties broken by id.</p></div>
+      <div class="step"><div class="n">4</div><h3>Random, seeded</h3><p>A tiny xorshift PRNG picks uniformly among healthy backends, reproducible from a fixed seed.</p></div>
+      <div class="step"><div class="n">5</div><h3>Health tracking</h3><p>Marking a backend down removes it from every strategy immediately, marking it up brings it straight back.</p></div>
+      <div class="step"><div class="n">6</div><h3>No panics</h3><p>If every backend is unhealthy, the balancer returns a typed error instead of crashing or hanging.</p></div>
+    </div>
+  </section>
+
+  <section id="source">
+    <h2>The same logic, from the command line.</h2>
+    <p class="lead">Run the demo binary and watch the identical distribution decisions print to a terminal.</p>
+    <pre><span class="c"># route 12 requests round-robin across 3 backends</span>
+cargo run -- demo --algo round-robin --backends 3 --requests 12</pre>
+  </section>
+
+  <noscript>
+    <div class="wrap" style="padding:40px 28px;color:#6a6d78">
+      Ferryman is a load balancer in Rust: the request-distribution strategies and health tracking at the core of a load balancer, isolated from the network. It implements round-robin, weighted round-robin, least-connections, and seeded random selection, tracks backend health so unhealthy backends are never picked, and tracks active connection counts so least-connections has something to compare. Source at github.com/pavanchow/ferryman. By Pavan Nallamothu.
+    </div>
+  </noscript>
+
+  <footer>
+    <p>The balancing logic, without the sockets.</p>
+    <p style="margin-top:12px"><a href="https://github.com/pavanchow/ferryman">github.com/pavanchow/ferryman</a></p>
+    <p style="margin-top:12px">By <span class="name">Pavan Nallamothu</span>.</p>
+  </footer>
+
+<script>
+(function () {
+  "use strict";
+
+  // rng.rs, ported: xorshift64*
+  function Xorshift64(seed) {
+    this.state = seed === 0 ? 0x9E3779B9n : BigInt.asUintN(64, BigInt(seed));
+  }
+  Xorshift64.prototype.nextU64 = function () {
+    var x = this.state;
+    x ^= (x << 13n) & 0xFFFFFFFFFFFFFFFFn;
+    x ^= x >> 7n;
+    x ^= (x << 17n) & 0xFFFFFFFFFFFFFFFFn;
+    this.state = x & 0xFFFFFFFFFFFFFFFFn;
+    return (this.state * 0x2545F4914F6CDD1Dn) & 0xFFFFFFFFFFFFFFFFn;
+  };
+  Xorshift64.prototype.nextBelow = function (bound) {
+    return Number(this.nextU64() % BigInt(bound));
+  };
+
+  // backend.rs, ported
+  function Backend(id, weight) {
+    this.id = id;
+    this.weight = Math.max(1, weight);
+    this.healthy = true;
+    this.active = 0;
+  }
+
+  // balancer.rs, ported
+  function Balancer(backends, strategy, seed) {
+    this.backends = backends;
+    this.strategy = strategy;
+    this.rrCursor = 0;
+    this.wrrCurrent = backends.map(function () { return 0; });
+    this.rng = new Xorshift64(seed || 42);
+  }
+  Balancer.prototype.byId = function (id) {
+    for (var i = 0; i < this.backends.length; i++) if (this.backends[i].id === id) return this.backends[i];
+    return null;
+  };
+  Balancer.prototype.acquire = function (id) { var b = this.byId(id); if (b) b.active++; };
+  Balancer.prototype.release = function (id) { var b = this.byId(id); if (b) b.active = Math.max(0, b.active - 1); };
+  Balancer.prototype.next = function () {
+    switch (this.strategy) {
+      case "round-robin": return this.nextRoundRobin();
+      case "weighted-round-robin": return this.nextWeighted();
+      case "least-connections": return this.nextLeastConnections();
+      case "random": return this.nextRandom();
+    }
+  };
+  Balancer.prototype.nextRoundRobin = function () {
+    var n = this.backends.length;
+    if (n === 0) return null;
+    for (var step = 0; step < n; step++) {
+      var i = (this.rrCursor + step) % n;
+      if (this.backends[i].healthy) {
+        this.rrCursor = (i + 1) % n;
+        return this.backends[i].id;
+      }
+    }
+    return null;
+  };
+  Balancer.prototype.nextWeighted = function () {
+    var n = this.backends.length;
+    if (n === 0) return null;
+    var total = 0;
+    for (var i = 0; i < n; i++) if (this.backends[i].healthy) total += this.backends[i].weight;
+    if (total === 0) return null;
+    var best = -1;
+    for (var j = 0; j < n; j++) {
+      if (!this.backends[j].healthy) continue;
+      this.wrrCurrent[j] += this.backends[j].weight;
+      if (best === -1 || this.wrrCurrent[j] > this.wrrCurrent[best]) best = j;
+    }
+    if (best === -1) return null;
+    this.wrrCurrent[best] -= total;
+    return this.backends[best].id;
+  };
+  Balancer.prototype.nextLeastConnections = function () {
+    var best = null;
+    for (var i = 0; i < this.backends.length; i++) {
+      var b = this.backends[i];
+      if (!b.healthy) continue;
+      if (best === null || b.active < best.active || (b.active === best.active && b.id < best.id)) best = b;
+    }
+    return best ? best.id : null;
+  };
+  Balancer.prototype.nextRandom = function () {
+    var healthy = this.backends.filter(function (b) { return b.healthy; });
+    if (healthy.length === 0) return null;
+    return healthy[this.rng.nextBelow(healthy.length)].id;
+  };
+
+  // --- demo wiring ---
+  var BACKEND_COUNT = 4;
+  var strategy = "round-robin";
+  var backends, balancer, tally, requestCount;
+
+  var grid = document.getElementById("backendGrid");
+  var log = document.getElementById("log");
+  var strategySelect = document.getElementById("strategySelect");
+  var resetBtn = document.getElementById("resetBtn");
+  var sendOneBtn = document.getElementById("sendOneBtn");
+  var sendTenBtn = document.getElementById("sendTenBtn");
+
+  function makeBackends() {
+    var list = [];
+    for (var i = 0; i < BACKEND_COUNT; i++) list.push(new Backend(i, i + 1));
+    return list;
+  }
+
+  function reset() {
+    backends = makeBackends();
+    balancer = new Balancer(backends, strategy, 42);
+    tally = backends.map(function () { return 0; });
+    requestCount = 0;
+    log.innerHTML = "";
+    renderBackends();
+  }
+
+  function renderBackends() {
+    grid.innerHTML = "";
+    backends.forEach(function (b) {
+      var el = document.createElement("div");
+      el.className = "backend" + (b.healthy ? "" : " down");
+      el.id = "backend-" + b.id;
+      var weightLine = strategy === "weighted-round-robin"
+        ? '<div class="row2"><span>weight</span><b>' + b.weight + '</b></div>' : "";
+      el.innerHTML =
+        '<div class="head"><span class="id">backend ' + b.id + '</span><span class="dot"></span></div>' +
+        weightLine +
+        '<div class="row2"><span>active conns</span><b>' + b.active + '</b></div>' +
+        '<div class="row2"><span>requests</span><b>' + tally[b.id] + '</b></div>' +
+        '<button class="toggle" type="button" data-id="' + b.id + '">' + (b.healthy ? "Mark unhealthy" : "Mark healthy") + '</button>';
+      grid.appendChild(el);
+    });
+    grid.querySelectorAll(".toggle").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = parseInt(btn.getAttribute("data-id"), 10);
+        var b = balancer.byId(id);
+        b.healthy = !b.healthy;
+        renderBackends();
+      });
+    });
+  }
+
+  function flash(id) {
+    var el = document.getElementById("backend-" + id);
+    if (!el) return;
+    el.classList.remove("flash");
+    void el.offsetWidth;
+    el.classList.add("flash");
+  }
+
+  function appendLog(text, isErr) {
+    var line = document.createElement("div");
+    line.className = "line" + (isErr ? " err" : "");
+    line.innerHTML = text;
+    log.insertBefore(line, log.firstChild);
+    while (log.children.length > 200) log.removeChild(log.lastChild);
+  }
+
+  function sendOne() {
+    requestCount++;
+    var id = balancer.next();
+    if (id === null) {
+      appendLog("request " + requestCount + " &rarr; <b>no backend available</b>", true);
+      return;
+    }
+    balancer.acquire(id);
+    tally[id]++;
+    flash(id);
+    appendLog("request " + requestCount + ' &rarr; <span class="b">backend ' + id + '</span>');
+    if (strategy === "least-connections") balancer.release(id);
+    renderBackends();
+  }
+
+  function sendTen() {
+    for (var i = 0; i < 10; i++) sendOne();
+  }
+
+  strategySelect.addEventListener("change", function () {
+    strategy = strategySelect.value;
+    reset();
+  });
+  resetBtn.addEventListener("click", reset);
+  sendOneBtn.addEventListener("click", sendOne);
+  sendTenBtn.addEventListener("click", sendTen);
+
+  reset();
+})();
+</script>
 </body>
 </html>
