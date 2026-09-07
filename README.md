@@ -1,3 +1,5 @@
+<img src="docs/logo.svg" alt="Ferryman logo" width="96">
+
 # Ferryman
 
 **A load balancer in Rust, stripped down to the part that decides.**

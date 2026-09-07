@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Ferryman logo">
+  <defs>
+    <linearGradient id="fmT" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7c7cf0"/>
+      <stop offset="1" stop-color="#4b4bc9"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#fmT)"/>
+  <g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round">
+    <path d="M30 64 H54"/>
+    <path d="M62 64 Q78 64 88 40"/>
+    <path d="M62 64 H92"/>
+    <path d="M62 64 Q78 64 88 88"/>
+  </g>
+  <circle cx="30" cy="64" r="9" fill="#fff"/>
+  <circle cx="62" cy="64" r="7" fill="#fff"/>
+  <circle cx="96" cy="40" r="9" fill="#fff"/>
+  <circle cx="100" cy="64" r="9" fill="#fff"/>
+  <circle cx="96" cy="88" r="9" fill="#fff"/>
+</svg>

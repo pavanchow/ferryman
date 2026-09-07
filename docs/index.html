@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
 <title>Ferryman: a load balancer in Rust</title>
 <meta name="description" content="Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, no network plumbing attached.">
 <meta name="author" content="Pavan Nallamothu (pavanchow)">
@@ -100,6 +101,13 @@
   pre .c{color:#8a8d9a}
   footer{padding:64px 0;border-top:1px solid var(--line);text-align:center;color:var(--muted)}
   footer .name{color:var(--ink);font-weight:600}
+  .howto{max-width:640px;margin:26px auto 0;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}
+  .howto summary{cursor:pointer;padding:14px 18px;font:600 14px var(--mono);color:var(--ink);list-style:none}
+  .howto summary::-webkit-details-marker{display:none}
+  .howto summary::before{content:"▸";margin-right:9px;color:var(--accent)}
+  .howto[open] summary::before{content:"▾"}
+  .howto .body{padding:0 18px 16px;color:var(--muted);font-size:15px}
+  .howto .body b{color:var(--ink)}
 </style>
 <link rel="author" href="https://github.com/pavanchow">
 <script type="application/ld+json">
@@ -116,6 +124,7 @@
   </div></nav>
 
   <div id="demo" class="hero">
+    <img src="logo.svg" alt="Ferryman logo" width="72" height="72" style="display:block;margin:0 auto 18px">
     <p class="eyebrow">Rust · no network plumbing</p>
     <h1>Which backend gets<br>the next request.</h1>
     <p class="sub">Ferryman is a load balancer in Rust, isolated down to the part that actually decides: round-robin, weighted round-robin, least-connections, and seeded random, plus health tracking that skips a backend the instant it goes down. Try it below.</p>
@@ -145,6 +154,11 @@
       <div id="log" class="log"></div>
       <p class="caption">toggle a backend unhealthy and watch requests reroute live</p>
     </div>
+
+    <details class="howto">
+      <summary>How to use this playground</summary>
+      <div class="body">Pick a <b>strategy</b> from the dropdown, then hit <b>Send request</b> or <b>Send 10</b> and watch each request light up the backend it routed to. Click <b>Mark unhealthy</b> on any backend to drop it from rotation and see traffic reroute instantly; mark it healthy to bring it back. <b>Reset</b> starts the run over. It is the same routing logic as the Rust crate, ported to JavaScript.</div>
+    </details>
   </div>
 
   <section id="how">
