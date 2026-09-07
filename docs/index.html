@@ -7,6 +7,7 @@
 <title>Ferryman: a load balancer in Rust</title>
 <meta name="description" content="Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, no network plumbing attached.">
 <meta name="author" content="Pavan Nallamothu (pavanchow)">
+<meta name="keywords" content="load balancer, Rust, round-robin, weighted round-robin, least-connections, health checks, request distribution, backend selection, from scratch, Pavan Nallamothu, pavanchow">
 <link rel="canonical" href="https://pavanchow.github.io/ferryman/">
 
 <meta property="og:type" content="website">
@@ -23,8 +24,10 @@
   "description": "Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, no network plumbing attached.",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Cross-platform",
+  "softwareVersion": "0.1.0",
   "author": { "@type": "Person", "name": "Pavan Nallamothu" },
   "url": "https://pavanchow.github.io/ferryman/",
+  "codeRepository": "https://github.com/pavanchow/ferryman",
   "programmingLanguage": "Rust"
 }
 </script>
@@ -50,6 +53,7 @@
   nav .brand .gem{width:16px;height:16px;transform:rotate(45deg);border-radius:3px;background:linear-gradient(135deg,#9a9af4,#5b5bd6)}
   nav .links{display:flex;gap:26px;align-items:center}
   nav .links a{color:var(--ink);font-size:14.5px}
+  nav .v{color:var(--faint);font-family:var(--mono);font-size:12px}
   @media(max-width:640px){nav .links a:not(.gh){display:none}}
 
   .hero{padding:70px 0 30px;text-align:center}
@@ -99,6 +103,13 @@
   .step h3{font-size:17px;margin-bottom:6px}.step p{color:var(--muted);font-size:15px}
   pre{background:#15161c;color:#ececf4;border-radius:14px;padding:20px 22px;font-family:var(--mono);font-size:13.5px;overflow-x:auto;max-width:640px;margin:40px auto 0}
   pre .c{color:#8a8d9a}
+  .term{max-width:680px;margin:38px auto 0;background:#15161c;color:#ececf4;border-radius:14px;padding:20px 22px;font-family:var(--mono);font-size:13px;line-height:1.65;overflow-x:auto}
+  .term .c{color:#8a8d9a}.term .b{color:#9a9af4;font-weight:600}.term .ok{color:#5fd18a}
+  .rows{max-width:800px;margin:44px auto 0}
+  .rows .r{display:grid;grid-template-columns:minmax(150px,1fr) 2fr;gap:14px 38px;padding:24px 0;border-top:1px solid var(--line)}
+  .rows .r:first-child{border-top:none}
+  .rows .r b{font-size:17px}.rows .r p{color:var(--muted)}
+  @media(max-width:640px){.rows .r{grid-template-columns:1fr;gap:6px}}
   footer{padding:64px 0;border-top:1px solid var(--line);text-align:center;color:var(--muted)}
   footer .name{color:var(--ink);font-weight:600}
   .howto{max-width:640px;margin:26px auto 0;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}
@@ -120,6 +131,7 @@
     <div class="links">
       <a href="#demo">Demo</a><a href="#how">How it works</a><a href="#source">Source</a>
       <a class="gh" href="https://github.com/pavanchow/ferryman">GitHub</a>
+      <span class="v">v0.1.0</span>
     </div>
   </div></nav>
 
@@ -174,11 +186,55 @@
     </div>
   </section>
 
+  <section>
+    <h2>Weight in, exactly that share out.</h2>
+    <p class="lead">The demo binary prints the same decisions the crate makes. Over one full cycle of weighted round-robin, each backend is picked exactly as many times as its weight, and no more.</p>
+    <div class="term">
+<span class="c">$ cargo run -- demo --algo weighted-round-robin --backends 4 --requests 10</span><br>
+strategy: weighted-round-robin<br>
+backends: 4<br>
+<br>
+request   1 -&gt; <span class="b">backend 3</span><br>
+request   2 -&gt; <span class="b">backend 2</span><br>
+request   3 -&gt; <span class="b">backend 1</span><br>
+request   4 -&gt; <span class="b">backend 3</span><br>
+request   5 -&gt; <span class="b">backend 0</span><br>
+request   6 -&gt; <span class="b">backend 2</span><br>
+request   7 -&gt; <span class="b">backend 3</span><br>
+request   8 -&gt; <span class="b">backend 1</span><br>
+request   9 -&gt; <span class="b">backend 2</span><br>
+request  10 -&gt; <span class="b">backend 3</span><br>
+<br>
+tally:<br>
+&nbsp;&nbsp;backend 0 : <span class="ok">1</span><br>
+&nbsp;&nbsp;backend 1 : <span class="ok">2</span><br>
+&nbsp;&nbsp;backend 2 : <span class="ok">3</span><br>
+&nbsp;&nbsp;backend 3 : <span class="ok">4</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Just the part that decides.</h2>
+    <p class="lead">A full load balancer is mostly network plumbing, with the selection logic buried inside it. Ferryman keeps only that logic, so it is deterministic and testable on its own.</p>
+    <div class="rows">
+      <div class="r"><b>nginx, HAProxy, Envoy</b><p>Full proxies: they terminate connections, parse protocols, and manage sockets, with the balancing algorithm one part buried inside all of it. Powerful, and not something you can unit-test in isolation.</p></div>
+      <div class="r"><b>Cloud load balancers</b><p>A managed black box. You configure a strategy and trust it. There is no small readable implementation to study or assert against.</p></div>
+      <div class="r"><b>Ferryman</b><p>The request-distribution strategies and health tracking, and nothing else. Given backends and their state, it returns which one gets the next request, deterministically, with every path covered by tests.</p></div>
+    </div>
+  </section>
+
   <section id="source">
-    <h2>The same logic, from the command line.</h2>
-    <p class="lead">Run the demo binary and watch the identical distribution decisions print to a terminal.</p>
+    <h2>A library first, a CLI to watch it.</h2>
+    <p class="lead">The same routing logic ships three ways. Call it directly, run the demo binary, or read the tests that pin every strategy down.</p>
+    <div class="rows">
+      <div class="r"><b>Library</b><p>Build a <code>Balancer</code> from a set of <code>Backend</code>s and a <code>Strategy</code>, then call <code>next()</code>. Use <code>acquire</code> and <code>release</code> to track connections, and <code>mark_down</code> and <code>mark_up</code> for health.</p></div>
+      <div class="r"><b>CLI</b><p><code>cargo run -- demo</code> with an algo, a backend count, a request count, and a seed. It prints which backend each request went to, plus a final tally.</p></div>
+      <div class="r"><b>Tests</b><p><code>cargo test</code> covers round-robin ordering, weighted distribution over a full cycle, least-connections under acquire and release, health toggling, the all-unhealthy and empty-pool error paths, and seeded reproducibility.</p></div>
+    </div>
     <pre><span class="c"># route 12 requests round-robin across 3 backends</span>
-cargo run -- demo --algo round-robin --backends 3 --requests 12</pre>
+cargo run -- demo --algo round-robin --backends 3 --requests 12
+<span class="c"># seeded random is reproducible run to run</span>
+cargo run -- demo --algo random --backends 3 --requests 15 --seed 42</pre>
   </section>
 
   <noscript>
