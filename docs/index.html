@@ -4,36 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
-<title>Ferryman: a load balancer in Rust</title>
-<meta name="description" content="Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, no network plumbing attached.">
-<meta name="author" content="Pavan Nallamothu (pavanchow)">
-<meta name="keywords" content="load balancer, Rust, round-robin, weighted round-robin, least-connections, health checks, request distribution, backend selection, from scratch, Pavan Nallamothu, pavanchow">
+<title>Ferryman: load balancer in Rust | Pavan Nallamothu</title>
+<meta name="description" content="Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking. By Pavan Nallamothu.">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="author" content="Pavan Nallamothu">
+<meta name="keywords" content="Ferryman, load balancer in Rust, round-robin, weighted round-robin, least-connections, seeded random, health checks, request distribution, backend selection, load balancing algorithms, from scratch load balancer, testable load balancer, Rust networking, Pavan Nallamothu, pavanchow">
 <link rel="canonical" href="https://pavanchow.github.io/ferryman/">
 
 <meta property="og:type" content="website">
-<meta property="og:title" content="Ferryman: a load balancer in Rust">
-<meta property="og:description" content="Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, no network plumbing attached.">
+<meta property="og:site_name" content="Pavan Nallamothu">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="Ferryman: load balancer in Rust | Pavan Nallamothu">
+<meta property="og:description" content="A load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with per-backend health tracking.">
 <meta property="og:url" content="https://pavanchow.github.io/ferryman/">
-<meta property="og:site_name" content="Ferryman">
+<meta property="og:image" content="https://pavanchow.github.io/ferryman/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Ferryman by Pavan Nallamothu">
 
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Ferryman: a load balancer in Rust">
-<meta name="twitter:description" content="Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, no network plumbing attached.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ferryman: load balancer in Rust | Pavan Nallamothu">
+<meta name="twitter:description" content="A load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random, with health tracking. By Pavan Nallamothu.">
+<meta name="twitter:image" content="https://pavanchow.github.io/ferryman/og-image.png">
+<meta name="twitter:creator" content="@pavanchow">
+<meta name="twitter:site" content="@pavanchow">
 
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "Ferryman",
-  "description": "Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, no network plumbing attached.",
-  "applicationCategory": "DeveloperApplication",
-  "operatingSystem": "Cross-platform",
-  "softwareVersion": "0.1.0",
-  "author": { "@type": "Person", "name": "Pavan Nallamothu" },
-  "url": "https://pavanchow.github.io/ferryman/",
-  "codeRepository": "https://github.com/pavanchow/ferryman",
-  "programmingLanguage": "Rust"
-}
+{"@context":"https://schema.org","@graph":[
+{"@type":"SoftwareApplication","name":"Ferryman","applicationCategory":"DeveloperApplication","operatingSystem":"Cross-platform","softwareVersion":"0.1.0","description":"Ferryman is a load balancer in Rust: round-robin, weighted round-robin, least-connections, and seeded random strategies with health tracking, isolated from the network so it stays deterministic and testable.","url":"https://pavanchow.github.io/ferryman/","image":"https://pavanchow.github.io/ferryman/og-image.png","programmingLanguage":"Rust","codeRepository":"https://github.com/pavanchow/ferryman","datePublished":"2026-08-21","author":{"@id":"https://github.com/pavanchow#pavan-nallamothu"},"publisher":{"@id":"https://github.com/pavanchow#pavan-nallamothu"},"keywords":"load balancer, round-robin, weighted round-robin, least-connections, seeded random, health tracking, request distribution","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"featureList":["Round-robin selection","Smooth weighted round-robin","Least-connections selection","Seeded random via xorshift PRNG","Per-backend health tracking","Active connection tracking","Typed error when every backend is down"]},
+{"@type":"Person","@id":"https://github.com/pavanchow#pavan-nallamothu","name":"Pavan Nallamothu","alternateName":"pavanchow","url":"https://github.com/pavanchow","jobTitle":"Software Engineer and Security Researcher","knowsAbout":["Rust","load balancing","distributed systems","networking","backend infrastructure","algorithms"],"sameAs":["https://github.com/pavanchow","https://hackerone.com/pavanchow"]},
+{"@type":"WebSite","name":"Ferryman by Pavan Nallamothu","url":"https://pavanchow.github.io/ferryman/","author":{"@id":"https://github.com/pavanchow#pavan-nallamothu"}},
+{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Pavan Nallamothu","item":"https://github.com/pavanchow"},{"@type":"ListItem","position":2,"name":"Ferryman","item":"https://pavanchow.github.io/ferryman/"}]},
+{"@type":"WebPage","url":"https://pavanchow.github.io/ferryman/","name":"Ferryman: load balancer in Rust | Pavan Nallamothu","isPartOf":{"@id":"https://pavanchow.github.io/ferryman/"},"about":{"@type":"SoftwareApplication","name":"Ferryman"},"author":{"@id":"https://github.com/pavanchow#pavan-nallamothu"},"inLanguage":"en"}
+]}
 </script>
 
 <style>
@@ -135,9 +138,6 @@
   .howto .body b{color:var(--ink)}
 </style>
 <link rel="author" href="https://github.com/pavanchow">
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"Person","name":"Pavan Nallamothu","alternateName":"pavanchow","url":"https://github.com/pavanchow","sameAs":["https://github.com/pavanchow","https://hackerone.com/pavanchow"]}
-</script>
 </head>
 <body>
   <nav><div class="row">
@@ -258,7 +258,16 @@ cargo run -- demo --algo random --backends 3 --requests 15 --seed 42</pre>
   </noscript>
 
   <footer>
-    <p>The balancing logic, without the sockets.</p>
+    <p style="font-weight:600;color:var(--ink);margin-bottom:14px">More open-source tools by Pavan Nallamothu</p>
+    <p style="max-width:720px;margin:0 auto;line-height:1.9">
+      <a href="https://pavanchow.github.io/echofront/">Echofront, a layer 7 reverse proxy and load balancer</a> ·
+      <a href="https://pavanchow.github.io/rift/">Rift, a programmable reverse proxy with a compiled DSL</a> ·
+      <a href="https://pavanchow.github.io/tollgate/">Tollgate, an API gateway pipeline</a> ·
+      <a href="https://pavanchow.github.io/hearth/">Hearth, an HTTP server from scratch</a> ·
+      <a href="https://pavanchow.github.io/semaphore/">Semaphore, a length-prefixed network protocol</a> ·
+      <a href="https://github.com/pavanchow">All projects on GitHub</a>
+    </p>
+    <p style="margin-top:28px">The balancing logic, without the sockets.</p>
     <p style="margin-top:12px"><a href="https://github.com/pavanchow/ferryman">github.com/pavanchow/ferryman</a></p>
     <p style="margin-top:12px">By <span class="name">Pavan Nallamothu</span>.</p>
   </footer>
