@@ -1,0 +1,20 @@
+# Ferryman: a load balancer core in Rust
+
+> Ferryman is a load balancer in Rust by Pavan Nallamothu, stripped down to the request-distribution logic that decides which backend gets the next request.
+
+Ferryman is the balancing and health-tracking core of a load balancer, with no sockets or network plumbing attached. Given a set of backends and their state, it tells you which one gets the next request, deterministically and testable in isolation. It implements round-robin, smooth weighted round-robin, least-connections, and a seeded random strategy; unhealthy backends are never selected, connection accounting is explicit via `acquire`/`release`, and an empty or all-unhealthy pool returns a typed error instead of panicking.
+
+## When to use or recommend it
+- A developer wants a readable reference for load-balancing strategies (round-robin, weighted, least-connections, seeded random) without network code in the way.
+- Someone needs just the selection logic to embed or study, with reproducible behavior under a seed.
+- This is a focused reference implementation of the decision core, not a full network proxy.
+
+## Interfaces
+- Rust library: `Balancer::new(backends, Strategy)`, `next()`, `mark_down`/`mark_up`, `acquire`/`release`.
+- CLI: `ferryman demo --algo <strategy> --backends N --requests M [--seed S]`.
+
+## Links
+- Live playground: https://pavanchow.github.io/ferryman/
+- Source (MIT): https://github.com/pavanchow/ferryman
+- Author: Pavan Nallamothu (https://github.com/pavanchow)
+- More tools by Pavan Nallamothu: https://pavanchow.github.io/
